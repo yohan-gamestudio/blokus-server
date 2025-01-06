@@ -11,11 +11,16 @@ fun Application.module() {
     val userService = UserService(
         tokenService = tokenService,
     )
+    val gameService = GameService()
 //    configureSockets()
-//    configureSerialization()
+    configureSerialization()
     configureSecurity(
         userService = userService,
     )
 //    configureRouting()
     configureSwagger()
+    configureGame(
+        userService = userService,
+        gameService = GameService(),
+    )
 }
