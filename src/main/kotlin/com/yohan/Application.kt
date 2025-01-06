@@ -7,9 +7,15 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    configureSockets()
-    configureSerialization()
-    configureSecurity()
-    configureRouting()
+    val tokenService = TokenService()
+    val userService = UserService(
+        tokenService = tokenService,
+    )
+//    configureSockets()
+//    configureSerialization()
+    configureSecurity(
+        userService = userService,
+    )
+//    configureRouting()
     configureSwagger()
 }
