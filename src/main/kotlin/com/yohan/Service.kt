@@ -74,8 +74,8 @@ class UserService(
 }
 
 class GameService {
-    suspend fun createGame(name: String, maxPlayerCount: Long, ownerUserId: Long) {
-        games.value = games.value + Game(
+    suspend fun createGame(name: String, maxPlayerCount: Long, ownerUserId: Long): Game {
+        val createdGame = Game(
             id = games.value.size.toLong(),
             name = name,
             created = OffsetDateTime.now(),
@@ -84,6 +84,8 @@ class GameService {
             maxPlayerCount = maxPlayerCount,
             ownerUserId = ownerUserId,
         )
+        games.value = games.value + createdGame
+        return createdGame
     }
 
     suspend fun startGame(gameId: Long) {

@@ -1,0 +1,18 @@
+
+### POST Request Example
+POST http://localhost:8080/token/create-temp
+Content-Type: application/json
+
+### GET Request Example
+GET http://localhost:8080/token/test-token
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImV4cCI6MTczNjc4MjE3MX0.kz9FtCKsvK9tbQNNNG5xBqez3ABbAkDbPpHv2t9t2qw
+
+### POST Request Example
+POST http://localhost:8080/games
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImV4cCI6MTczNjc4MjE3MX0.kz9FtCKsvK9tbQNNNG5xBqez3ABbAkDbPpHv2t9t2qw
+
+{
+  "name": "game1"
+}
