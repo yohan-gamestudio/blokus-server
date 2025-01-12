@@ -153,6 +153,20 @@ fun Application.configureGame(
                     }
                 )
             }
+
+            get("/games/lobby-view", {
+
+            }) {
+                val games = gameService.getGames()
+                val users = userService.getUsers()
+                call.respond(
+                    games.map { game ->
+                        val owner = users.find { it.id == game.ownerUserId }
+                            ?: throw IllegalStateException("Owner not found")
+                        GamePublicLobbyView.from(game, owner)
+                    }
+                )
+            }
         }
     }
 }
