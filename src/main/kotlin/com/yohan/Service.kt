@@ -35,7 +35,7 @@ data class Game(
 data class GameUser(
     val gameId: Long,
     val userId: Long,
-    val isReady: Boolean,
+    var isReady: Boolean,
 )
 
 class TokenService {
@@ -74,6 +74,39 @@ class UserService(
 class GameService {
     private val games = mutableListOf<Game>()
     private val gameUsers = mutableListOf<GameUser>()
+    fun readyGame(gameId: Long, userId: Long) {
+        games.find { it.id == gameId } ?: throw Exception("Game not found")
+        val gameUser = gameUsers.find { it.gameId == gameId && it.userId == userId } ?: throw Exception("User not found in game")
+        gameUser.isReady = true
+    }
+    fun unReadyGame(gameId: Long, userId: Long) {
+        games.find { it.id == gameId } ?: throw Exception("Game not found")
+        val gameUser = gameUsers.find { it.gameId == gameId && it.userId == userId } ?: throw Exception("User not found in game")
+        gameUser.isReady = false
+    }
+    fun joinGame(gameId: Long, userId: Long) {
+        val game = games.find { it.id == gameId } ?: throw Exception("Game not found")
+        if (game.state != GameState.WAITING) {
+            throw Exception("Game is not in waiting state")
+        }
+        if (game.playerUserIds.size >= game.maxPlayerCount) {
+            throw Exception("Game is full")
+        }
+        val alreadyExistingGameUser = gameUsers.find { it.gameId == gameId && it.userId == userId } != null
+        if (alreadyExistingGameUser) {
+            throw Exception("User is already in the game")
+        }
+        gameUsers.add(GameUser(gameId, userId, false))
+    }
+    fun exitGame(gameId: Long, userId: Long) {
+        val game = games.find { it.id == gameId } ?: throw Exception("Game not found")
+        if (game.ownerUserId != userId) {
+            throw Exception("Only the owner can exit the game")
+        }
+        gameUsers.find { it.gameId == gameId && it.userId == userId }?.let {
+            gameUsers.remove(it)
+        }
+    }
     fun createGame(name: String, maxPlayerCount: Long, ownerUserId: Long): Game {
         val createdGame = Game(
             id = games.size.toLong(),
@@ -88,8 +121,11 @@ class GameService {
         return createdGame
     }
 
-    fun startGame(gameId: Long) {
+    fun startGame(gameId: Long, userId: Long) {
         val game = games.find { it.id == gameId } ?: throw Exception("Game not found")
+        if (game.ownerUserId != userId) {
+            throw Exception("Only the owner can start the game")
+        }
         game.state = GameState.ONGOING
     }
 

@@ -155,7 +155,14 @@ fun Application.configureGame(
             }
 
             get("/games/lobby-view", {
-
+                tags = listOf("Games")
+                description = "Get the lobby view of all games"
+                response {
+                    HttpStatusCode.OK to {
+                        description = "Successfully retrieved the lobby view of all games"
+                        body<List<GamePublicLobbyView>> { description = "The lobby view of all games" }
+                    }
+                }
             }) {
                 val games = gameService.getGames()
                 val users = userService.getUsers()
@@ -166,6 +173,78 @@ fun Application.configureGame(
                         GamePublicLobbyView.from(game, owner)
                     }
                 )
+            }
+
+            post("/games/{gameId}/start", {
+                tags = listOf("Games")
+                description = "Start a game"
+                request {
+                    pathParameter<Long>("gameId") {
+                        description = "id of game"
+                        required = true
+                    }
+                }
+            }) {
+                val gameId = call.parameters["gameId"]?.toLongOrNull()
+                    ?: throw IllegalArgumentException("Invalid gameId")
+                val userId = call.principal<JWTPrincipal>()?.getClaim("userId", Long::class)
+                    ?: throw IllegalStateException("No userId in token")
+                gameService.startGame(gameId, userId)
+                call.respond(HttpStatusCode.OK)
+            }
+
+            post("/games/{gameId}/exit", {
+                tags = listOf("Games")
+                description = "Exit a game"
+                request {
+                    pathParameter<Long>("gameId") {
+                        description = "id of game"
+                        required = true
+                    }
+                }
+            }) {
+                val gameId = call.parameters["gameId"]?.toLongOrNull()
+                    ?: throw IllegalArgumentException("Invalid gameId")
+                val userId = call.principal<JWTPrincipal>()?.getClaim("userId", Long::class)
+                    ?: throw IllegalStateException("No userId in token")
+                gameService.exitGame(gameId, userId)
+                call.respond(HttpStatusCode.OK)
+            }
+
+            post("/games/{gameId}/join", {
+                tags = listOf("Games")
+                description = "Join a game"
+                request {
+                    pathParameter<Long>("gameId") {
+                        description = "id of game"
+                        required = true
+                    }
+                }
+            }) {
+                val gameId = call.parameters["gameId"]?.toLongOrNull()
+                    ?: throw IllegalArgumentException("Invalid gameId")
+                val userId = call.principal<JWTPrincipal>()?.getClaim("userId", Long::class)
+                    ?: throw IllegalStateException("No userId in token")
+                gameService.joinGame(gameId, userId)
+                call.respond(HttpStatusCode.OK)
+            }
+
+            post("/games/{gameId}/ready", {
+                tags = listOf("Games")
+                description = "Ready a player in game"
+                request {
+                    pathParameter<Long>("gameId") {
+                        description = "id of game"
+                        required = true
+                    }
+                }
+            }) {
+                val gameId = call.parameters["gameId"]?.toLongOrNull()
+                    ?: throw IllegalArgumentException("Invalid gameId")
+                val userId = call.principal<JWTPrincipal>()?.getClaim("userId", Long::class)
+                    ?: throw IllegalStateException("No userId in token")
+                gameService.unReadyGame(gameId, userId)
+                call.respond(HttpStatusCode.OK)
             }
         }
     }
