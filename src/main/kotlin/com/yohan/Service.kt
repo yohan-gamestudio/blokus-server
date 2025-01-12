@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.OffsetDateTime
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import kotlinx.serialization.Serializable
 
 data class UserToken(
     val token: String,
@@ -16,6 +17,7 @@ data class User(
     val token: UserToken
 )
 
+@Serializable
 enum class GameState {
     WAITING,
     ONGOING,
@@ -38,7 +40,6 @@ data class GameUser(
 )
 
 val users = MutableStateFlow<List<User>>(emptyList())
-val games = MutableStateFlow<List<Game>>(emptyList())
 val gameUsers = MutableStateFlow<List<GameUser>>(emptyList())
 
 class TokenService {
@@ -69,11 +70,12 @@ class UserService(
     }
 
     suspend fun getUsers(): List<User> {
-        return users.value
+        return users.value.toList()
     }
 }
 
 class GameService {
+    private val games = MutableStateFlow<List<Game>>(emptyList())
     suspend fun createGame(name: String, maxPlayerCount: Long, ownerUserId: Long): Game {
         val createdGame = Game(
             id = games.value.size.toLong(),
@@ -97,6 +99,10 @@ class GameService {
                 it
             }
         }
+    }
+
+    suspend fun getGames(): List<Game> {
+        return games.value.toList()
     }
 }
 

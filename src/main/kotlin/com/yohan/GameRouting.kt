@@ -7,6 +7,7 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.routing
 import kotlinx.serialization.Serializable
 import io.github.smiley4.ktorswaggerui.dsl.routing.post
+import io.github.smiley4.ktorswaggerui.dsl.routing.get
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.principal
 import io.ktor.server.routing.get
@@ -46,6 +47,37 @@ data class GameCreateResponse(
         }
     }
 }
+
+@Serializable
+data class GamePublicLobbyView(
+    val id: Long,
+    val name: String,
+    val maxPlayerCount: Long,
+    val state: GameState,
+    val owner: UserView,
+) {
+    companion object {
+        fun from(game: Game, owner: User): GamePublicLobbyView {
+            return GamePublicLobbyView(
+                id = game.id,
+                name = game.name,
+                maxPlayerCount = game.maxPlayerCount,
+                state = game.state,
+                owner = UserView(
+                    id = owner.id,
+                    name = owner.name,
+                ),
+            )
+        }
+    }
+}
+
+@Serializable
+data class UserView(
+    val id: Long,
+    val name: String,
+)
+
 
 fun Application.configureGame(
     userService: UserService,
@@ -99,6 +131,27 @@ fun Application.configureGame(
                     ownerUserId = userId
                 )
                 call.respond(HttpStatusCode.Created, GameCreateResponse.from(game))
+            }
+
+            get("/games/public-lobby-view", {
+                tags = listOf("Games")
+                description = "Get the public lobby view of all games"
+                response {
+                    HttpStatusCode.OK to {
+                        description = "Successfully retrieved the public lobby view of all games"
+                        body<List<GamePublicLobbyView>> { description = "The public lobby view of all games" }
+                    }
+                }
+            }) {
+                val games = gameService.getGames()
+                val users = userService.getUsers()
+                call.respond(
+                    games.map { game ->
+                        val owner = users.find { it.id == game.ownerUserId }
+                            ?: throw IllegalStateException("Owner not found")
+                        GamePublicLobbyView.from(game, owner)
+                    }
+                )
             }
         }
     }
