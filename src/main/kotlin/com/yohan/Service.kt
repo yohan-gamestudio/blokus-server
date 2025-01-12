@@ -132,6 +132,9 @@ class GameService {
     fun getGames(): List<Game> {
         return games.toList()
     }
+    fun getGameUsers(gameId: Long): List<GameUser> {
+        return gameUsers.filter { it.gameId == gameId }
+    }
 }
 
 const val jwtSecret = "secret"

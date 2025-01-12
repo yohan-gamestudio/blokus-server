@@ -73,6 +73,51 @@ data class GamePublicLobbyView(
 }
 
 @Serializable
+data class GameRoomView(
+    val id: Long,
+    val name: String,
+    val maxPlayerCount: Long,
+    val state: GameState,
+    val players: List<GameRoomPlayerView>,
+    val owner: GameRoomOwnerView,
+) {
+    companion object {
+        fun from(game: Game, owner: User, players: List<Pair<GameUser, User>>): GameRoomView {
+            return GameRoomView(
+                id = game.id,
+                name = game.name,
+                maxPlayerCount = game.maxPlayerCount,
+                state = game.state,
+                players = players.map { (gameUser, user) ->
+                    GameRoomPlayerView(
+                        id = user.id,
+                        name = user.name,
+                        isReady = gameUser.isReady,
+                    )
+                },
+                owner = GameRoomOwnerView(
+                    id = owner.id,
+                    name = owner.name,
+                ),
+            )
+        }
+    }
+}
+
+@Serializable
+data class GameRoomPlayerView(
+    val id: Long,
+    val name: String,
+    val isReady: Boolean,
+)
+
+@Serializable
+data class GameRoomOwnerView(
+    val id: Long,
+    val name: String,
+)
+
+@Serializable
 data class UserView(
     val id: Long,
     val name: String,
@@ -154,7 +199,7 @@ fun Application.configureGame(
                 )
             }
 
-            get("/games/lobby-view", {
+            get("/games/{gameId}/game-room-view", {
                 tags = listOf("Games")
                 description = "Get the lobby view of all games"
                 response {
@@ -166,13 +211,19 @@ fun Application.configureGame(
             }) {
                 val games = gameService.getGames()
                 val users = userService.getUsers()
-                call.respond(
-                    games.map { game ->
-                        val owner = users.find { it.id == game.ownerUserId }
-                            ?: throw IllegalStateException("Owner not found")
-                        GamePublicLobbyView.from(game, owner)
+                val gameId = call.parameters["gameId"]?.toLongOrNull()
+                    ?: throw IllegalArgumentException("Invalid gameId")
+                val game = games.find { it.id == gameId }
+                    ?: throw IllegalArgumentException("Game not found")
+                val owner = users.find { it.id == game.ownerUserId }
+                    ?: throw IllegalStateException("Owner not found")
+                val players = gameService.getGameUsers(gameId)
+                    .map { gameUser ->
+                        val user = users.find { it.id == gameUser.userId }
+                            ?: throw IllegalStateException("User not found")
+                        gameUser to user
                     }
-                )
+                call.respond(GameRoomView.from(game, owner, players))
             }
 
             post("/games/{gameId}/start", {
