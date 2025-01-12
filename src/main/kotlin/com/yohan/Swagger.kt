@@ -1,6 +1,8 @@
 package com.yohan
 
 import io.github.smiley4.ktorswaggerui.SwaggerUI
+import io.github.smiley4.ktorswaggerui.data.AuthScheme
+import io.github.smiley4.ktorswaggerui.data.AuthType
 import io.github.smiley4.ktorswaggerui.routing.openApiSpec
 import io.github.smiley4.ktorswaggerui.routing.swaggerUI
 import io.ktor.server.application.Application
@@ -18,6 +20,13 @@ fun Application.configureSwagger() {
         server {
             url = "http://localhost:8080"
             description = "Development Server"
+        }
+        security {
+            securityScheme("jwt") {
+                type = AuthType.HTTP
+                scheme = AuthScheme.BEARER
+            }
+            defaultSecuritySchemeNames("jwt")
         }
     }
     routing {
