@@ -27,7 +27,6 @@ data class Game(
     val name: String,
     val created: OffsetDateTime,
     var state: GameState,
-    val playerUserIds: List<Long>,
     val maxPlayerCount: Long,
     val ownerUserId: Long,
 )
@@ -89,10 +88,11 @@ class GameService {
         if (game.state != GameState.WAITING) {
             throw Exception("Game is not in waiting state")
         }
-        if (game.playerUserIds.size >= game.maxPlayerCount) {
+        val existingGameUsers = gameUsers.filter { it.gameId == gameId }
+        if (existingGameUsers.size >= game.maxPlayerCount) {
             throw Exception("Game is full")
         }
-        val alreadyExistingGameUser = gameUsers.find { it.gameId == gameId && it.userId == userId } != null
+        val alreadyExistingGameUser = existingGameUsers.find { it.gameId == gameId && it.userId == userId } != null
         if (alreadyExistingGameUser) {
             throw Exception("User is already in the game")
         }
@@ -113,7 +113,6 @@ class GameService {
             name = name,
             created = OffsetDateTime.now(),
             state = GameState.WAITING,
-            playerUserIds = emptyList(),
             maxPlayerCount = maxPlayerCount,
             ownerUserId = ownerUserId,
         )
