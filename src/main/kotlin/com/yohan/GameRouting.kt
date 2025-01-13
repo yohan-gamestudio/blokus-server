@@ -53,11 +53,12 @@ data class GamePublicLobbyView(
     val id: Long,
     val name: String,
     val maxPlayerCount: Long,
+    val currentPlayerCount: Long,
     val state: GameState,
     val owner: UserView,
 ) {
     companion object {
-        fun from(game: Game, owner: User): GamePublicLobbyView {
+        fun from(game: Game, owner: User, currentPlayerCount: Long): GamePublicLobbyView {
             return GamePublicLobbyView(
                 id = game.id,
                 name = game.name,
@@ -67,6 +68,7 @@ data class GamePublicLobbyView(
                     id = owner.id,
                     name = owner.name,
                 ),
+                currentPlayerCount = currentPlayerCount,
             )
         }
     }
@@ -245,11 +247,12 @@ fun Application.configureGame(
             }) {
                 val games = gameService.getGames()
                 val users = userService.getUsers()
+                val gameUsers = gameService.getGameUsers()
                 call.respond(
                     games.map { game ->
                         val owner = users.find { it.id == game.ownerUserId }
                             ?: throw IllegalStateException("Owner not found")
-                        GamePublicLobbyView.from(game, owner)
+                        GamePublicLobbyView.from(game, owner, gameUsers.filter { it.gameId == game.id }.size.toLong())
                     }
                 )
             }

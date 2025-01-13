@@ -29,7 +29,7 @@ data class Game(
     val created: OffsetDateTime,
     var state: GameState,
     val maxPlayerCount: Long,
-    val ownerUserId: Long,
+    var ownerUserId: Long,
     var currentTurnPlayerUserId: Long? = null,
     val board: Array<Array<GameColor>> = Array(20) { Array(20) { GameColor.EMPTY } },
 )
@@ -114,11 +114,16 @@ class GameService {
     }
     fun exitGame(gameId: Long, userId: Long) {
         val game = games.find { it.id == gameId } ?: throw Exception("Game not found")
-        if (game.ownerUserId != userId) {
-            throw Exception("Only the owner can exit the game")
-        }
-        gameUsers.find { it.gameId == gameId && it.userId == userId }?.let {
-            gameUsers.remove(it)
+        val allGameUsers = gameUsers.filter { it.gameId == gameId }
+        val gameUser = allGameUsers.find { it.userId == userId } ?: throw Exception("User not found in game")
+
+        if (allGameUsers.size == 1) {
+            gameUsers.remove(gameUser)
+            games.remove(game)
+        } else {
+            val gameUsersExceptExitUser = gameUsers.filter { it.userId != userId }.first()
+            game.ownerUserId = gameUsersExceptExitUser.userId
+            gameUsers.remove(gameUser)
         }
     }
     fun createGame(name: String, maxPlayerCount: Long, ownerUserId: Long): Game {
@@ -167,6 +172,9 @@ class GameService {
     }
     fun getGameUsers(gameId: Long): List<GameUser> {
         return gameUsers.filter { it.gameId == gameId }
+    }
+    fun getGameUsers(): List<GameUser> {
+        return gameUsers
     }
 }
 
