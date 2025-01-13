@@ -82,6 +82,13 @@ class UserService(
     fun getUsers(): List<User> {
         return users.toList()
     }
+
+    fun getUsers(userId: Long): User {
+        return users.first { it.id == userId }
+    }
+    fun exists(userId: Long): Boolean {
+        return users.any { it.id == userId }
+    }
 }
 
 class GameService {

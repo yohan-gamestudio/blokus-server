@@ -3,6 +3,7 @@ package com.yohan
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.auth.HttpAuthHeader
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -16,6 +17,24 @@ fun Application.configureSecurity(userService: UserService) {
     install(Authentication) {
         jwt("jwt") {
             realm = "ktor sample app"
+            authHeader { call ->
+                val authorizationHeader = call.request.headers["Authorization"]
+                val queryToken = call.request.queryParameters["token"]
+                
+                when {
+                    !authorizationHeader.isNullOrBlank() -> try {
+                        HttpAuthHeader.Single("Bearer", authorizationHeader)
+                    } catch (e: IllegalArgumentException) {
+                        null
+                    }
+                    !queryToken.isNullOrBlank() -> try {
+                        HttpAuthHeader.Single("Bearer", queryToken)
+                    } catch (e: IllegalArgumentException) {
+                        null
+                    }
+                    else -> null
+                }
+            }
             verifier(
                 JWT
                     .require(Algorithm.HMAC256(jwtSecret))
@@ -23,8 +42,13 @@ fun Application.configureSecurity(userService: UserService) {
             )
             validate { credential ->
                 val tokenExpiredDate = credential.payload.expiresAt
+                val userId = credential.payload.getClaim("userId").asLong()
 
                 if (tokenExpiredDate == null) {
+                    respond(HttpStatusCode.Unauthorized)
+                }
+
+                if (!userService.exists(userId = userId)) {
                     respond(HttpStatusCode.Unauthorized)
                 }
 
