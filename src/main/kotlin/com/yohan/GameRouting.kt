@@ -257,6 +257,12 @@ fun Application.configureGame(
             get("/games/{gameId}/game-room-view", {
                 tags = listOf("Games")
                 description = "Get the lobby view of all games"
+                request {
+                    pathParameter<Long>("gameId") {
+                        description = "id of game"
+                        required = true
+                    }
+                }
                 response {
                     HttpStatusCode.OK to {
                         description = "Successfully retrieved the lobby view of all games"
@@ -284,6 +290,12 @@ fun Application.configureGame(
             get("/games/{gameId}/in-game-view", {
                 tags = listOf("Games")
                 description = "Get the in game view"
+                request {
+                    pathParameter<Long>("gameId") {
+                        description = "id of game"
+                        required = true
+                    }
+                }
                 response {
                     HttpStatusCode.OK to {
                         description = "Successfully retrieved the in game view of game"
