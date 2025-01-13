@@ -294,6 +294,23 @@ fun Application.configureGame(
                     ?: throw IllegalArgumentException("Invalid gameId")
                 val userId = call.principal<JWTPrincipal>()?.getClaim("userId", Long::class)
                     ?: throw IllegalStateException("No userId in token")
+                gameService.readyGame(gameId, userId)
+                call.respond(HttpStatusCode.OK)
+            }
+            post("/games/{gameId}/unready", {
+                tags = listOf("Games")
+                description = "Unready a player in game"
+                request {
+                    pathParameter<Long>("gameId") {
+                        description = "id of game"
+                        required = true
+                    }
+                }
+            }) {
+                val gameId = call.parameters["gameId"]?.toLongOrNull()
+                    ?: throw IllegalArgumentException("Invalid gameId")
+                val userId = call.principal<JWTPrincipal>()?.getClaim("userId", Long::class)
+                    ?: throw IllegalStateException("No userId in token")
                 gameService.unReadyGame(gameId, userId)
                 call.respond(HttpStatusCode.OK)
             }
