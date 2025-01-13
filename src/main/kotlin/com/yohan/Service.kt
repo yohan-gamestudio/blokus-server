@@ -4,6 +4,7 @@ import java.time.OffsetDateTime
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import kotlinx.serialization.Serializable
+import kotlin.Array
 
 data class UserToken(
     val token: String,
@@ -29,13 +30,25 @@ data class Game(
     var state: GameState,
     val maxPlayerCount: Long,
     val ownerUserId: Long,
+    val board: Array<Array<GameColor>> = Array(20) { Array(20) { GameColor.EMPTY } },
 )
 
 data class GameUser(
     val gameId: Long,
     val userId: Long,
     var isReady: Boolean,
+    var color: GameColor? = null,
+    var pieces: MutableList<GamePiece>? = null,
 )
+
+@Serializable
+enum class GameColor(val code: Int) {
+    EMPTY(0),
+    RED(1),
+    BLUE(2),
+    GREEN(3),
+    YELLOW(4),
+}
 
 class TokenService {
     fun generateToken(userId: Long): UserToken {
@@ -123,9 +136,28 @@ class GameService {
 
     fun startGame(gameId: Long, userId: Long) {
         val game = games.find { it.id == gameId } ?: throw Exception("Game not found")
+        val gameUsers = gameUsers.filter { it.gameId == gameId }
         if (game.ownerUserId != userId) {
             throw Exception("Only the owner can start the game")
         }
+        if (gameUsers.size < 2) {
+            throw Exception("Not enough players to start the game")
+        }
+        if (gameUsers.any { !it.isReady }) {
+            throw Exception("Not all players are ready")
+        }
+
+        val colors = mutableSetOf<GameColor>(GameColor.RED, GameColor.BLUE, GameColor.GREEN, GameColor.YELLOW)
+
+        for (gameUser in gameUsers) {
+            val color = colors.first()
+            colors.remove(color)
+            gameUser.color = color
+            gameUser.pieces = GamePieceType.entries.map {
+                GamePiece(color, it)
+            }.toMutableList()
+        }
+
         game.state = GameState.ONGOING
     }
 
