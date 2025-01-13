@@ -138,12 +138,11 @@ class GameService {
     fun startGame(gameId: Long, userId: Long) {
         val game = games.find { it.id == gameId } ?: throw Exception("Game not found")
         val gameUsers = gameUsers.filter { it.gameId == gameId }
-        if (game.ownerUserId != userId) {
-            throw Exception("Only the owner can start the game")
-        }
+        val owner = gameUsers.find { it.userId == game.ownerUserId } ?: throw Exception("Owner not found")
         if (gameUsers.size < 2) {
             throw Exception("Not enough players to start the game")
         }
+        owner.isReady = true
         if (gameUsers.any { !it.isReady }) {
             throw Exception("Not all players are ready")
         }
