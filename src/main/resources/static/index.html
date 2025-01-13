@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Client</title>
+    <style>
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .system-message {
+            color: #666;
+            font-style: italic;
+        }
+        .chat-message {
+            margin: 5px 0;
+        }
+        .username {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        #loginSection {
+            margin-bottom: 20px;
+        }
+        #chatSection {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div id="loginSection">
+    <input type="text" id="usernameInput" placeholder="Enter username">
+    <button onclick="createUser()">Join Chat</button>
+</div>
+
+<div id="chatSection">
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+    let ws;
+    const loginSection = document.getElementById('loginSection');
+    const chatSection = document.getElementById('chatSection');
+    const messages = document.getElementById('messages');
+    const messageInput = document.getElementById('messageInput');
+    const usernameInput = document.getElementById('usernameInput');
+
+    async function createUser() {
+        const username = usernameInput.value.trim();
+        if (!username) {
+            alert('Please enter a username');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:8080/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: username
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create user');
+            }
+
+            const data = await response.json();
+            localStorage.setItem('userToken', data.token);
+            
+            // Initialize WebSocket connection after successful login
+            initializeWebSocket();
+            
+            // Show chat section and hide login
+            loginSection.style.display = 'none';
+            chatSection.style.display = 'block';
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to create user');
+        }
+    }
+
+    function initializeWebSocket() {
+        const token = localStorage.getItem('userToken');
+        ws = new WebSocket('ws://localhost:8080/chat', [], {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const div = document.createElement('div');
+            div.className = 'chat-message' + (data.username === 'System' ? ' system-message' : '');
+            div.innerHTML = `
+                <span class="username">${data.username}:</span>
+                <span class="message">${data.message}</span>
+            `;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        };
+
+        ws.onclose = function() {
+            const div = document.createElement('div');
+            div.className = 'system-message';
+            div.textContent = 'Connection closed. Please refresh the page.';
+            messages.appendChild(div);
+        };
+    }
+
+    function sendMessage() {
+        const message = messageInput.value;
+        if (message.trim() && ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(message);
+            messageInput.value = '';
+        }
+    }
+
+    messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Check if user is already logged in
+    const existingToken = localStorage.getItem('userToken');
+    if (existingToken) {
+        loginSection.style.display = 'none';
+        chatSection.style.display = 'block';
+        initializeWebSocket();
+    }
+</script>
+</body>
+</html>
