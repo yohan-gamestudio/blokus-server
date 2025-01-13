@@ -3,7 +3,16 @@ package com.yohan
 data class GamePiece(
     val color: GameColor,
     val type: GamePieceType,
+    val used: Boolean,
 )
+
+fun GamePiece.toShapeIntArray(): Array<Array<Int>> {
+    return this.type.shapeInfo.shape.map { row ->
+        row.map { cell ->
+            if (cell) this.color.code else 0
+        }.toTypedArray()
+    }.toTypedArray()
+}
 
 data class ShapeInfo (
     val shape: Array<Array<Boolean>>,

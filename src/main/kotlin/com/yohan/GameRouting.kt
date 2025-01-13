@@ -73,6 +73,61 @@ data class GamePublicLobbyView(
 }
 
 @Serializable
+data class InGamePlayerView(
+    val id: Long,
+    val name: String,
+    val colorCode: Int,
+    val blocks: List<InGameBlockView>,
+)
+
+@Serializable
+data class InGameBlockView(
+    val shape: Array<Array<Int>>,
+    val isUsed: Boolean,
+)
+
+@Serializable
+data class InGameView(
+    val id: Long,
+    val name: String,
+    val state: GameState,
+    val currentTurnPlayerUserId: Long,
+    val players: List<InGamePlayerView>,
+    val board: Array<Array<Int>>,
+) {
+    companion object {
+        fun from(game: Game, players: List<Pair<GameUser, User>>, ): InGameView {
+            return InGameView(
+                id = game.id,
+                name = game.name,
+                state = game.state,
+                currentTurnPlayerUserId = game.currentTurnPlayerUserId
+                    ?: throw IllegalStateException("No current turn player"),
+                players = players.map { (gameUser, user) ->
+                    InGamePlayerView(
+                        id = user.id,
+                        name = user.name,
+                        colorCode = gameUser.color?.code
+                            ?: throw IllegalStateException("No color"),
+                        blocks = gameUser.pieces?.map { piece ->
+                            InGameBlockView(
+                                shape = piece.toShapeIntArray(),
+                                isUsed = piece.used,
+                            )
+                        } ?: throw IllegalStateException("No pieces"),
+                    )
+                },
+                board = game.board.map { row ->
+                    row.map { cell ->
+                        cell.code
+                    }.toTypedArray()
+                }.toTypedArray(),
+            )
+        }
+    }
+}
+
+@Serializable
 data class GameRoomView(
     val id: Long,
     val name: String,
@@ -224,6 +279,31 @@ fun Application.configureGame(
                         gameUser to user
                     }
                 call.respond(GameRoomView.from(game, owner, players))
+            }
+
+            get("/games/{gameId}/in-game-view", {
+                tags = listOf("Games")
+                description = "Get the in game view"
+                response {
+                    HttpStatusCode.OK to {
+                        description = "Successfully retrieved the in game view of game"
+                        body<List<GamePublicLobbyView>> { description = "The in game view of game" }
+                    }
+                }
+            }) {
+                val games = gameService.getGames()
+                val users = userService.getUsers()
+                val gameId = call.parameters["gameId"]?.toLongOrNull()
+                    ?: throw IllegalArgumentException("Invalid gameId")
+                val game = games.find { it.id == gameId }
+                    ?: throw IllegalArgumentException("Game not found")
+                val players = gameService.getGameUsers(gameId)
+                    .map { gameUser ->
+                        val user = users.find { it.id == gameUser.userId }
+                            ?: throw IllegalStateException("User not found")
+                        gameUser to user
+                    }
+                call.respond(InGameView.from(game, players))
             }
 
             post("/games/{gameId}/start", {

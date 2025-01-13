@@ -30,6 +30,7 @@ data class Game(
     var state: GameState,
     val maxPlayerCount: Long,
     val ownerUserId: Long,
+    var currentTurnPlayerUserId: Long? = null,
     val board: Array<Array<GameColor>> = Array(20) { Array(20) { GameColor.EMPTY } },
 )
 
@@ -38,7 +39,7 @@ data class GameUser(
     val userId: Long,
     var isReady: Boolean,
     var color: GameColor? = null,
-    var pieces: MutableList<GamePiece>? = null,
+    var pieces: List<GamePiece>? = null,
 )
 
 @Serializable
@@ -154,10 +155,11 @@ class GameService {
             colors.remove(color)
             gameUser.color = color
             gameUser.pieces = GamePieceType.entries.map {
-                GamePiece(color, it)
-            }.toMutableList()
+                GamePiece(color, it, false)
+            }.toList()
         }
 
+        game.currentTurnPlayerUserId = gameUsers.random().userId
         game.state = GameState.ONGOING
     }
 
