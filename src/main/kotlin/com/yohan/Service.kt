@@ -116,6 +116,7 @@ class GameService {
             maxPlayerCount = maxPlayerCount,
             ownerUserId = ownerUserId,
         )
+        gameUsers.add(GameUser(createdGame.id, ownerUserId, false))
         games.add(createdGame)
         return createdGame
     }
