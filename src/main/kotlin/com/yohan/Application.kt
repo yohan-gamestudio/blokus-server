@@ -27,4 +27,5 @@ fun Application.module() {
         userService = userService,
     )
     configureStaticContent()
+    configureCors()
 }
