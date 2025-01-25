@@ -5,6 +5,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import kotlinx.serialization.Serializable
 import kotlin.Array
+import kotlin.text.toLongOrNull
 
 data class UserToken(
     val token: String,
@@ -91,7 +92,9 @@ class UserService(
     }
 }
 
-class GameService {
+class GameService (
+    private val userService: UserService,
+) {
     private val games = mutableListOf<Game>()
     private val gameUsers = mutableListOf<GameUser>()
     fun readyGame(gameId: Long, userId: Long) {
@@ -182,6 +185,20 @@ class GameService {
     }
     fun getGameUsers(): List<GameUser> {
         return gameUsers
+    }
+    fun getInGameView(gameId: Long): InGameView {
+        val users = userService.getUsers()
+        val game = games.find { it.id == gameId } ?: throw Exception("Game not found")
+        val players = gameUsers.filter { it.gameId == gameId }
+            .map { gameUser ->
+                val user = users.find { it.id == gameUser.userId }
+                    ?: throw IllegalStateException("User not found")
+                gameUser to user
+            }
+        return InGameView.from(
+            game = game,
+            players = players,
+        )
     }
 }
 

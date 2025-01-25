@@ -306,19 +306,9 @@ fun Application.configureGame(
                     }
                 }
             }) {
-                val games = gameService.getGames()
-                val users = userService.getUsers()
                 val gameId = call.parameters["gameId"]?.toLongOrNull()
                     ?: throw IllegalArgumentException("Invalid gameId")
-                val game = games.find { it.id == gameId }
-                    ?: throw IllegalArgumentException("Game not found")
-                val players = gameService.getGameUsers(gameId)
-                    .map { gameUser ->
-                        val user = users.find { it.id == gameUser.userId }
-                            ?: throw IllegalStateException("User not found")
-                        gameUser to user
-                    }
-                call.respond(InGameView.from(game, players))
+                call.respond(gameService.getInGameView(gameId = gameId))
             }
 
             post("/games/{gameId}/start", {

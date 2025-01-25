@@ -11,7 +11,6 @@ import java.util.Collections
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 enum class ChatMessageType {
@@ -68,15 +67,6 @@ class ChatServer {
         fun removeConnection(connection: Connection) = connections.remove(connection)
 
         fun getMessageHistory() = messageHistory.toList()
-    }
-}
-
-fun Application.configureSockets() {
-    install(WebSockets) {
-        pingPeriod = 15.seconds
-        timeout = 15.seconds
-        maxFrameSize = Long.MAX_VALUE
-        masking = false
     }
 }
 
