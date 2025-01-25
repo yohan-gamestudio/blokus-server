@@ -42,6 +42,7 @@
 </div>
 
 <script>
+    const SITE_HOST = window.location.host;
     let ws;
     const loginSection = document.getElementById('loginSection');
     const chatSection = document.getElementById('chatSection');
@@ -57,7 +58,7 @@
         }
 
         try {
-            const response = await fetch('http://localhost:8080/users', {
+            const response = await fetch(`http://${SITE_HOST}/users`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -90,7 +91,7 @@
 
     function initializeWebSocket() {
         const token = localStorage.getItem('userToken');
-        ws = new WebSocket(`ws://localhost:8080/chat?token=${token}`);
+        ws = new WebSocket(`ws://${SITE_HOST}/chat?token=${token}`);
         
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
@@ -147,7 +148,7 @@
         if (!token) return false;
 
         try {
-            const response = await fetch('http://localhost:8080/token/test-token', {
+            const response = await fetch(`http://${SITE_HOST}/token/test-token`, {
                 headers: {
                     'Authorization': token
                 }
