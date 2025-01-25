@@ -3,7 +3,7 @@ package com.yohan
 data class GamePiece(
     val color: GameColor,
     val type: GamePieceType,
-    val used: Boolean,
+    var used: Boolean,
 )
 
 fun GamePiece.toShapeIntArray(): Array<Array<Int>> {

@@ -5,7 +5,6 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import kotlinx.serialization.Serializable
 import kotlin.Array
-import kotlin.text.toLongOrNull
 
 data class UserToken(
     val token: String,
@@ -199,6 +198,38 @@ class GameService (
             game = game,
             players = players,
         )
+    }
+    fun placePiece(gameId: Long, playerUserId: Long, pieceIndex: Int, pieceShape: Array<Array<Int>>) {
+        val game = games.find { it.id == gameId } ?: throw Exception("Game not found")
+        val gameUser = gameUsers.find { it.gameId == gameId && it.userId == playerUserId } ?: throw Exception("User not found in game")
+        if (game.currentTurnPlayerUserId != playerUserId) {
+            throw Exception("Not your turn")
+        }
+
+        val piece = gameUser.pieces?.first { GamePieceType.entries.toTypedArray()[pieceIndex] == it.type } ?: throw Exception("Piece not found")
+        if (piece.used) {
+            throw Exception("Piece already used")
+        }
+        piece.used = true
+
+        game.board.forEachIndexed { rowIndex, row ->
+            row.forEachIndexed { columnIndex, cell ->
+                val shouldPlacePiece = pieceShape[rowIndex][columnIndex] != 0
+                val isBoardEmpty = game.board[rowIndex][columnIndex] == GameColor.EMPTY
+                if (shouldPlacePiece && isBoardEmpty.not()) {
+                    throw Exception("Piece cannot be placed here")
+                }
+            }
+        }
+
+        game.board.forEachIndexed { rowIndex, row ->
+            row.forEachIndexed { columnIndex, cell ->
+                val shouldPlacePiece = pieceShape[rowIndex][columnIndex] != 0
+                if (shouldPlacePiece) {
+                    game.board[rowIndex][columnIndex] = piece.color
+                }
+            }
+        }
     }
 }
 

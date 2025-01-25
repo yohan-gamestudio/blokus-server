@@ -10,8 +10,6 @@ import io.github.smiley4.ktorswaggerui.dsl.routing.post
 import io.github.smiley4.ktorswaggerui.dsl.routing.get
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.principal
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
 import io.ktor.server.auth.jwt.JWTPrincipal
 
 @Serializable
@@ -31,6 +29,11 @@ data class CreateUserResponse(
         }
     }
 }
+@Serializable
+data class GamePiecePlaceRequest(
+    val index: Int,
+    val gamePiece: Array<Array<Int>>,
+)
 
 @Serializable
 data class GameCreateRequest(
@@ -397,6 +400,34 @@ fun Application.configureGame(
                 val userId = call.principal<JWTPrincipal>()?.getClaim("userId", Long::class)
                     ?: throw IllegalStateException("No userId in token")
                 gameService.unReadyGame(gameId, userId)
+                call.respond(HttpStatusCode.OK)
+            }
+            post("/games/{gameId}/place-piece", {
+                tags = listOf("Games")
+                description = "Place a piece in game"
+                request {
+                    body<GamePiecePlaceRequest> {
+                        description = "The game to create"
+                        required = true
+                    }
+                    pathParameter<Long>("gameId") {
+                        description = "id of game"
+                        required = true
+                    }
+
+                }
+            }) {
+                val gameId = call.parameters["gameId"]?.toLongOrNull()
+                    ?: throw IllegalArgumentException("Invalid gameId")
+                val userId = call.principal<JWTPrincipal>()?.getClaim("userId", Long::class)
+                    ?: throw IllegalStateException("No userId in token")
+                val request = call.receive<GamePiecePlaceRequest>()
+                gameService.placePiece(
+                    gameId = gameId,
+                    playerUserId = userId,
+                    pieceIndex = request.index,
+                    pieceShape = request.gamePiece,
+                )
                 call.respond(HttpStatusCode.OK)
             }
         }
