@@ -3,7 +3,10 @@ package com.yohan
 import java.time.OffsetDateTime
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import io.ktor.websocket.send
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlin.Array
 
 data class UserToken(
@@ -199,7 +202,7 @@ class GameService (
             players = players,
         )
     }
-    fun placePiece(gameId: Long, playerUserId: Long, pieceIndex: Int, pieceShape: Array<Array<Int>>) {
+    suspend fun placePiece(gameId: Long, playerUserId: Long, pieceIndex: Int, pieceShape: Array<Array<Int>>) {
         val game = games.find { it.id == gameId } ?: throw Exception("Game not found")
         val gameUser = gameUsers.find { it.gameId == gameId && it.userId == playerUserId } ?: throw Exception("User not found in game")
         if (game.currentTurnPlayerUserId != playerUserId) {
@@ -229,6 +232,34 @@ class GameService (
                     game.board[rowIndex][columnIndex] = piece.color
                 }
             }
+        }
+
+        val currentGameUsers = gameUsers.filter { it.gameId == gameId }
+            .sortedBy {
+                when (it.color) {
+                    GameColor.BLUE -> 0
+                    GameColor.YELLOW -> 1
+                    GameColor.RED -> 2
+                    GameColor.GREEN -> 3
+                    else -> throw IllegalStateException("Invalid color")
+                }
+            }
+        val currentGameUserIndex = currentGameUsers.indexOf(gameUser)
+        val nextGameUserIndex = (currentGameUserIndex + 1) % currentGameUsers.size
+        game.currentTurnPlayerUserId = currentGameUsers[nextGameUserIndex].userId
+
+        val roomEvent = RoomEvent(
+            type = RoomMessageType.GAME_STATE_UPDATED,
+            payload = RoomMessagePayload(
+                game = getInGameView(gameId = gameId)
+            ),
+        )
+        RoomServer.addMessage(roomEvent)
+        RoomServer.getConnections(
+            gameId = gameId,
+            gameService = this,
+        ).forEach {
+            it.session.send(Json.encodeToString(roomEvent))
         }
     }
 }
