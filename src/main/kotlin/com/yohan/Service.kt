@@ -199,6 +199,9 @@ class GameService (
     fun getGameUsers(): List<GameUser> {
         return gameUsers
     }
+    fun getGame(gameId: Long): Game {
+        return games.find { it.id == gameId } ?: throw Exception("Game not found")
+    }
     fun getInGameView(gameId: Long): InGameView {
         val users = userService.getUsers()
         val game = games.find { it.id == gameId } ?: throw Exception("Game not found")

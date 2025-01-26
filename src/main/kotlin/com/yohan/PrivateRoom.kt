@@ -26,7 +26,7 @@ enum class RoomMessageType {
 
 @Serializable
 data class RoomMessagePayload(
-    val game: InGameView,
+    val game: InGameView?,
 )
 
 @Serializable
@@ -150,7 +150,7 @@ fun Application.configureRoom(
                     val connectMessage = RoomEvent(
                         type = RoomMessageType.CONNECT,
                         payload = RoomMessagePayload(
-                            game = gameService.getInGameView(gameId = gameId)
+                            game = if(gameService.getGame(gameId).state == GameState.ONGOING) gameService.getInGameView(gameId = gameId) else null
                         ),
                     )
                     RoomServer.addMessage(connectMessage)
