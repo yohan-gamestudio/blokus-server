@@ -152,7 +152,7 @@ class GameService (
         return createdGame
     }
 
-    fun startGame(gameId: Long, userId: Long) {
+    suspend fun startGame(gameId: Long, userId: Long) {
         val game = games.find { it.id == gameId } ?: throw Exception("Game not found")
         val gameUsers = gameUsers.filter { it.gameId == gameId }
         val owner = gameUsers.find { it.userId == game.ownerUserId } ?: throw Exception("Owner not found")
@@ -177,6 +177,17 @@ class GameService (
 
         game.currentTurnPlayerUserId = gameUsers.random().userId
         game.state = GameState.ONGOING
+        RoomServer.getConnections(
+            gameId = gameId,
+            gameService = this,
+        ).forEach {
+            it.session.send(Json.encodeToString(RoomEvent(
+                type = RoomMessageType.GAME_START,
+                payload = RoomMessagePayload(
+                    game = getInGameView(gameId = gameId)
+                ),
+            )))
+        }
     }
 
     fun getGames(): List<Game> {

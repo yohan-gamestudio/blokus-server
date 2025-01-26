@@ -20,6 +20,7 @@ enum class RoomMessageType {
     CONNECT,
     DISCONNECT,
     GAME_STATE_UPDATED,
+    GAME_START,
     LEAVE,
 }
 
