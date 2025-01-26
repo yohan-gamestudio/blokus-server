@@ -23,7 +23,7 @@ fun Application.configureSecurity(userService: UserService) {
                 
                 when {
                     !authorizationHeader.isNullOrBlank() -> try {
-                        HttpAuthHeader.Single("Bearer", authorizationHeader)
+                        HttpAuthHeader.Single("Bearer", authorizationHeader.removePrefix("Bearer "))
                     } catch (e: IllegalArgumentException) {
                         null
                     }
