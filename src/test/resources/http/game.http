@@ -1,0 +1,71 @@
+### Login - owner
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "owner"
+}
+> {% client.global.set("owner-token", response.body.token) %}
+
+
+### Login - user
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "user"
+}
+> {% client.global.set("user-token", response.body.token) %}
+
+### Create room - owner
+POST {{baseUrl}}/games
+Authorization: Bearer {{owner-token}}
+Content-Type: application/json
+
+{
+  "name": "room-name"
+}
+> {% client.global.set("gameId", response.body.id) %}
+
+### Join Room - user
+POST {{baseUrl}}/games/{{gameId}}/join
+Authorization: Bearer {{user-token}}
+Content-Type: application/json
+
+### Get room info - user
+GET {{baseUrl}}/games/{{gameId}}/game-room-view
+Authorization: Bearer {{user-token}}
+
+### Ready - user
+POST {{baseUrl}}/games/{{gameId}}/ready
+Authorization: Bearer {{user-token}}
+
+### Subscribe game socket - owner
+WEBSOCKET {{webSocketUrl}}/games/{{gameId}}/room?token={{owner-token}}
+
+### Subscribe game socket - user
+WEBSOCKET {{webSocketUrl}}/games/{{gameId}}/room?token={{user-token}}
+
+### Start game - owner
+POST {{baseUrl}}/games/{{gameId}}/start
+Authorization: Bearer {{owner-token}}
+
+### Place piece - owner
+POST {{baseUrl}}/games/{{gameId}}/place-piece
+Authorization: Bearer {{owner-token}}
+Content-Type: application/json
+
+{
+  "index": 0,
+  "gamePiece": [[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+}
+
+### Place piece - user
+POST {{baseUrl}}/games/{{gameId}}/place-piece
+Authorization: Bearer {{user-token}}
+Content-Type: application/json
+
+{
+  "index": 0,
+  "gamePiece": [[0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
+}
